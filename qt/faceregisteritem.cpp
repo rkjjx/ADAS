@@ -1,0 +1,106 @@
+/******************************************************************
+Copyright 2022 Guangzhou ALIENTEK Electronincs Co.,Ltd. All rights reserved
+Copyright © Deng Zhimao Co., Ltd. 1990-2030. All rights reserved.
+* @projectName   facedetection
+* @brief         facedetectionitem.cpp
+* @author        Deng Zhimao
+* @email         dengzhimao@alientek.com
+* @date          2022-10-31
+* @link          http://www.openedv.com/forum.php
+*******************************************************************/
+#include "faceregisteritem.h"
+#include <QDebug>
+#include <QCoreApplication>
+FaceRegisterItem::FaceRegisterItem(QQuickItem *parent) : QQuickItem(parent)
+{
+    setFlag(ItemHasContents, true);
+    captureThread = new FaceRegisterCaptureThread(this);
+    //m_imageThumb = QImage(640, 480, QImage::Format_RGB888);
+
+    connect(captureThread, SIGNAL(resultReady(QImage)),
+            this, SLOT(updateImage(QImage)));
+
+    connect(captureThread, SIGNAL(finished()),
+            this, SIGNAL(captureStop()));
+    captureThread->start();
+    captureThread->setThreadStart(true);
+}
+
+void FaceRegisterItem::updateImage(QImage image)
+{
+    QMatrix leftmatrix;
+    //    if (camerId == 2)
+    //        leftmatrix.rotate(90);
+    //    else
+    //        leftmatrix.rotate(0);
+
+    m_imageThumb = image.transformed(leftmatrix, Qt::SmoothTransformation);
+    update();
+}
+
+FaceRegisterItem::~FaceRegisterItem()
+{
+
+    captureThread->setThreadStart(false);
+    captureThread->quit();
+    captureThread->wait();
+
+    delete captureThread;
+
+    captureThread = nullptr;
+}
+void FaceRegisterItem::startCapture(bool start)
+{
+    if (!captureThread->isRunning())
+        emit captureStop();
+    captureThread->setThreadStart(start);
+    if (start) {
+        if (!captureThread->isRunning())
+            captureThread->start();
+    } else {
+        captureThread->quit();
+    }
+}
+
+QSGNode * FaceRegisterItem::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdatePaintNodeData *)
+{
+    auto node = dynamic_cast<QSGSimpleTextureNode *>(oldNode);
+
+    if(!node){
+        node = new QSGSimpleTextureNode();
+    }
+
+    QSGTexture *m_texture = window()->createTextureFromImage(m_imageThumb, QQuickWindow::TextureIsOpaque);
+    node->setOwnsTexture(true);
+    node->setRect(boundingRect());
+    node->markDirty(QSGNode::DirtyForceUpdate);
+    node->setTexture(m_texture);
+
+    return node;
+}
+void FaceRegisterItem::saveimage()
+{
+    FaceRegisterFrame *frame = GetFace_1();
+    QImage image((unsigned char *)frame->file, 112, 112, QImage::Format_RGB888);
+    QMatrix leftmatrix;
+    m_imageThumb = image.transformed(leftmatrix, Qt::SmoothTransformation);
+    QFile file(picture_name);
+    if (file.exists()) {
+        qDebug() << "File already exists: " << picture_name << ", overwriting...";// 若文件存在，会直接覆盖
+    }
+    m_imageThumb.save(picture_name,"JPEG",-1);
+    emit imageSaved();
+}
+void FaceRegisterItem::savefacefeature()
+{
+    command = "/demo/bin/import_face_library " + name + " " + picture_name;
+    system(command.toLatin1());
+    printf("import_face_library done.\n");
+}
+void FaceRegisterItem::getname(QString name_end)
+{
+    name = name_end;
+    picture_name = "/demo/bin/";
+    picture_name.append(name_end);
+    picture_name.append("_face.jpg");
+}
