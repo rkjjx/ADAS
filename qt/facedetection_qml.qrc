@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>fatigue_test.qml</file>
+    </qresource>
+</RCC>
