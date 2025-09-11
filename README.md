@@ -7,6 +7,10 @@
 
 ![sqlite](https://cdn.jsdelivr.net/gh/rkjjx/Pictures@main/sqlite.jpg)
 
+## QT
+
+![qt](https://cdn.jsdelivr.net/gh/rkjjx/Pictures@main/qt.jpg)
+
 注：由于重新烧录rv1126系统，使得三个模型文件丢失，无法提供给大家，抱歉
 
 
