@@ -37,7 +37,7 @@ contains(TARGET_ARCH, arm) {
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /demo/$${TARGET}/bin
+else: unix:!android: target.path = /demo/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
